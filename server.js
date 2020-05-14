@@ -7,6 +7,7 @@ AWS.config.update({ region: 'us-east-1' });
 const dynamodb = new AWS.DynamoDB();
 const s3 = new AWS.S3();
 var bodyParser = require('body-parser');
+let rekognition = new AWS.Rekognition();
 
 app.use(bodyParser.json({ limit: '200mb' }));
 app.use(bodyParser.urlencoded({ limit: '200mb', extended: true }));
