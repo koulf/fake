@@ -63,16 +63,13 @@ let uploadImagesToS3 = async function () {
 		for (const imageToUpload of imagesToUpload) {
 			let xhr = new XMLHttpRequest();
 			xhr.open('POST', '/s3/post');
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            const body = {
-                base64: imageToUpload.base64,
-                key: imageToUpload.name
-            }
-			xhr.send(JSON.stringify(body));
-			xhr.onload = evt => {
-				if (xhr.status == 200) {
-				} else alert(xhr.responseText);
+			xhr.setRequestHeader('Content-Type', 'application/json');
+			const body = {
+				base64: imageToUpload.base64,
+				key: imageToUpload.name
 			};
+
+			xhr.send(JSON.stringify(body));
 		}
 
 		imagesFromS3.push(imagesToUpload);
@@ -95,15 +92,31 @@ let showS3Images = function () {
 			S3ImagesGrid.appendChild(image);
 		}
 		const allImages = document.querySelectorAll('img');
-		allImages.forEach(image => {
-			image.addEventListener('click', e => {
+		allImages.forEach(async (image, index) => {
+			image.addEventListener('click', async e => {
 				lightbox.classList.add('active');
 				const img = document.createElement('img');
+				const par0 = document.createElement('h3');
+
 				img.src = image.src;
 				while (lightbox.firstChild) {
 					lightbox.removeChild(lightbox.firstChild);
 				}
+				const info = await (
+					await fetch('/rek/analysis', {
+						method: 'POST', // or 'PUT'
+						body: JSON.stringify({ key: imagesFromS3[index - 1].name }), // data can be `string` or {object}!
+						headers: {
+							'Content-Type': 'application/json'
+						}
+					})
+				).json();
+
+				par0.innerHTML = `${info.Gender.Value} ${info.AgeRange.Low}-${info.AgeRange.High} years old.`;
+				par0.classList.add('text-light');
 				lightbox.appendChild(img);
+				lightbox.appendChild(par0);
+				
 			});
 		});
 
