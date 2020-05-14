@@ -13,6 +13,7 @@
     "node": "11.6"
   },
   "dependencies": {
+    "aws-sdk": ">= 2.0.9",
     "express": "^4.17.1"
   }
 }
