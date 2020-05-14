@@ -156,5 +156,3 @@ async function allBucketKeys(s3, bucket) {
 
 	return keys;
 }
-
-app.listen(port, () => console.log("Running in  http://localhost"))
