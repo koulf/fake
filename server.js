@@ -8,8 +8,13 @@ const dynamodb = new AWS.DynamoDB();
 const s3 = new AWS.S3();
 
 
+app.use(bodyParser.json({ limit: '200mb' }));
+app.use(bodyParser.urlencoded({ limit: '200mb', extended: true }));
+app.use(bodyParser.text({ limit: '200mb' }));
 app.use(express.json());
 app.use(express.static(__dirname + '/public'));
+
+
 
 
 app.put('/user/register', (req, res) => {
