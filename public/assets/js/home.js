@@ -1,0 +1,115 @@
+let dropzone = document.getElementById('dropzone');
+let toUploadGridDiv = document.getElementById('toUploadGridDiv');
+let toUploadGrid = document.getElementById('toUploadGrid');
+let S3ImagesGridDiv = document.getElementById('S3ImagesGridDiv');
+let S3ImagesGrid = document.getElementById('S3ImagesGrid');
+let uploadBtn = document.getElementById('uploadBtn');
+let imagesToUpload = [];
+let imagesFromS3 = [];
+
+const lightbox = document.createElement('div');
+lightbox.id = 'lightbox';
+document.body.appendChild(lightbox);
+
+(function () {
+	let upload = function (files) {
+		for (const file of files) {
+			if (!file.type.includes('image')) continue;
+			let reader = new FileReader();
+			reader.onload = function (e) {
+				imagesToUpload.push({ name: file.name, base64: e.target.result });
+				const image = document.createElement('img');
+				image.src = e.target.result;
+
+				toUploadGrid.appendChild(image);
+			};
+
+			reader.readAsDataURL(file);
+		}
+
+		toUploadGridDiv.className = toUploadGridDiv.className.replace(
+			'inactive',
+			''
+		);
+		dropzone.className += ' inactive';
+		uploadBtn.className = uploadBtn.className.replace('inactive', '');
+	};
+
+	dropzone.ondrop = function (e) {
+		e.preventDefault();
+		this.className = 'dropzone';
+		upload(e.dataTransfer.files);
+	};
+
+	dropzone.ondragover = function () {
+		this.className = 'dropzone dragover';
+		return false;
+	};
+
+	dropzone.ondragleave = function () {
+		this.className = 'dropzone';
+		return false;
+	};
+})();
+
+let uploadImagesToS3 = async function () {
+	toUploadGridDiv.className += 'inactive';
+	toUploadGrid.innerHTML = '';
+	dropzone.className = dropzone.className.replace('inactive', '');
+	uploadBtn.className += ' inactive';
+	console.log(imagesToUpload);
+	if (imagesToUpload.length > 0) {
+		// Upload to database
+		for (const imageToUpload of imagesToUpload) {
+			let xhr = new XMLHttpRequest();
+			xhr.open('POST', '/s3/post');
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            const body = {
+                base64: imageToUpload.base64,
+                key: imageToUpload.name
+            }
+			xhr.send(JSON.stringify(body));
+			xhr.onload = evt => {
+				if (xhr.status == 200) {
+				} else alert(xhr.responseText);
+			};
+		}
+
+		imagesFromS3.push(imagesToUpload);
+		imagesFromS3 = imagesFromS3.flat(Infinity);
+		imagesToUpload = [];
+		showS3Images();
+	}
+};
+
+let showS3Images = function () {
+	if (imagesFromS3.length > 0) {
+		S3ImagesGridDiv.className = S3ImagesGridDiv.className.replace(
+			'inactive',
+			''
+		);
+		S3ImagesGrid.innerHTML = '';
+		for (const file of imagesFromS3) {
+			const image = document.createElement('img');
+			image.src = file.base64;
+			S3ImagesGrid.appendChild(image);
+		}
+		const allImages = document.querySelectorAll('img');
+		allImages.forEach(image => {
+			image.addEventListener('click', e => {
+				lightbox.classList.add('active');
+				const img = document.createElement('img');
+				img.src = image.src;
+				while (lightbox.firstChild) {
+					lightbox.removeChild(lightbox.firstChild);
+				}
+				lightbox.appendChild(img);
+			});
+		});
+
+		lightbox.addEventListener('click', e => {
+			if (e.target !== e.currentTarget) return;
+			lightbox.classList.remove('active');
+		});
+	}
+};

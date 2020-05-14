@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link rel="stylesheet" href="/assets/css/register.css">
+
+    <title>Image Analyzer</title>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark static-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <img src="https://miro.medium.com/max/300/1*0E3yFp02lhzV_QVBq3rGcQ.png" alt="" style="width: 15%;">
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive"
+                aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/{root}/">Home</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/{root}/login">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/{root}/register">Register</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-10 col-xl-9 mx-auto">
+                <div class="card card-signin flex-row my-5">
+                    <div class="card-img-left d-none d-md-flex">
+                        <!-- Background image for card set in CSS! -->
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title text-center">Register</h5>
+                        <form class="form-signin">
+                            <div class="form-label-group">
+                                <input type="text" id="inputUserame" class="form-control" placeholder="Username"
+                                    required autofocus>
+                                <label for="inputUserame">Username</label>
+                            </div>
+
+                            <div class="form-label-group">
+                                <input type="email" id="inputEmail" class="form-control" placeholder="Email address"
+                                    required>
+                                <label for="inputEmail">Email address</label>
+                            </div>
+
+                            <hr>
+
+                            <div class="form-label-group">
+                                <input type="password" id="inputPassword" class="form-control" placeholder="Password"
+                                    required>
+                                <label for="inputPassword">Password</label>
+                            </div>
+
+                            <div class="form-label-group">
+                                <input type="password" id="inputConfirmPassword" class="form-control"
+                                    placeholder="Password" required>
+                                <label for="inputConfirmPassword">Confirm password</label>
+                            </div>
+
+                            <button id="register_btn" class="btn btn-lg btn-primary btn-block text-uppercase">Register</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script src="/assets/js/register.js"></script>
+
+</html>

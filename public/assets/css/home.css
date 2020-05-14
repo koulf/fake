@@ -1,0 +1,71 @@
+
+/* Set a background image by replacing the URL below */
+body {
+    background: url('/assets/img/bg_c.jpg') no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    background-size: cover;
+    -o-background-size: cover;
+  }
+
+  .dropzone {
+    width: 100%;
+    height: 200px;
+    border: 2px dashed #ccc;
+    color: #ccc;
+    line-height: 200px;
+    text-align: center;
+  }
+
+  .dropzone.dragover {
+    border-color: #000;
+    color: #000;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(5, 200px);
+    justify-content: center;
+    align-content: center;
+    grid-gap: 10px;
+  }
+
+  .grid img {
+    width: 200px;
+    height: 200px;
+    cursor: pointer;
+  }
+
+  .inactive {
+    display: none;
+  }
+
+  #lightbox {
+    position: fixed;
+    z-index: 1000;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: none;
+  }
+
+  #lightbox.active {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #lightbox img {
+    max-width: 90%;
+    max-height: 80%;
+    padding: 4px;
+    background-color: black;
+    border: 2px solid white;
+  }
+
+  /* .body {
+    background-image: url('/assets/img/bg_a.jpg'), url('assets/img/bg_b.jpg');
+    background-position: right, left;
+    background-repeat: no-repeat, no-repeat;
+} */
