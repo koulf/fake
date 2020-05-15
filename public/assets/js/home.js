@@ -11,6 +11,11 @@ const lightbox = document.createElement('div');
 lightbox.id = 'lightbox';
 document.body.appendChild(lightbox);
 
+document.getElementsByTagName("body")[0].onload = () => {
+	if (sessionStorage.getItem("token") == null)
+		window.location.href = "/";
+}
+
 (function () {
 	let upload = function (files) {
 		for (const file of files) {
@@ -126,3 +131,7 @@ let showS3Images = function () {
 		});
 	}
 };
+
+document.getElementById("logout").onclick = () => {
+	window.sessionStorage.removeItem("token");
+}

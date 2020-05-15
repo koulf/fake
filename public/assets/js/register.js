@@ -29,7 +29,10 @@ registerBtn.addEventListener("click", (evt) => {
                 window.location.href = "/login";
             }
             else
-                alert(xhr.responseText);
+                if (xhr.status == 401)
+                    alert("Email's already registered")
+                else
+                    alert("Unknown server error");
         };
     }
 });

@@ -7,6 +7,11 @@ let username = document.getElementById("inputEmail");
 let pass = document.getElementById("inputPassword");
 
 
+document.getElementsByTagName("body")[0].onload = () => {
+    if (window.sessionStorage.getItem("token") != null)
+        window.location.href = "/home";
+}
+
 loginBtn.addEventListener("click", (evt) => {
     event.preventDefault();
     let xhr = new XMLHttpRequest();
@@ -19,10 +24,13 @@ loginBtn.addEventListener("click", (evt) => {
     xhr.send(JSON.stringify(user));
     xhr.onload = (evt) => {
         if (xhr.status == 201) {
+            window.sessionStorage.setItem("token", xhr.response);
             alert("Accessing");
             window.location.href = "/home";
         }
+        else if (xhr.status == 400)
+            alert("Username not registered");
         else
-            alert(xhr.responseText);
+            alert("Invalid password");
     };
 });

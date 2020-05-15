@@ -1,74 +1,87 @@
 const express = require('express');
 const app = express();
-port = process.env.PORT || 80;
-
+const bcrypt = require('bcryptjs');
 const AWS = require("aws-sdk");
+const bodyParser = require('body-parser');
+
 AWS.config.update({ region: 'us-east-1' });
 const dynamodb = new AWS.DynamoDB();
 const s3 = new AWS.S3();
-var bodyParser = require('body-parser');
-let rekognition = new AWS.Rekognition();
+const rekognition = new AWS.Rekognition();
+
+port = process.env.PORT || 80;
+
+
 
 app.use(bodyParser.json({ limit: '200mb' }));
 app.use(bodyParser.urlencoded({ limit: '200mb', extended: true }));
 app.use(bodyParser.text({ limit: '200mb' }));
-app.use(express.json());
+
+
 app.use(express.static(__dirname + '/public'));
 
 
-
+// Routes
 
 app.put('/user/register', (req, res) => {
-    let item = {};
+	let item = {};
 
-    Object.keys(req.body).forEach((key) => {
-        if (key == 'correo')
-            item.id = {
-                S: req.body[key]
-            };
-        else
-            item[key] = {
-                S: req.body[key]
-            };
-    })
+	Object.keys(req.body).forEach((key) => {
+		if (key == 'correo')
+			item.id = {
+				S: req.body[key]
+			};
+		else if (key == 'password')
+			item.password = {
+				S: bcrypt.hashSync(req.body[key], 8)
+			};
+		else
+			item[key] = {
+				S: req.body[key]
+			}
+	})
 
-    let params = {
-        Item: item,
-        ReturnConsumedCapacity: "TOTAL",
-        TableName: "ImageAnalyzer"
-    };
+	let params = {
+		Item: item,
+		ReturnConsumedCapacity: "TOTAL",
+		TableName: "ImageAnalyzer",
+		ConditionExpression: "attribute_not_exists(id)"
+	};
 
-    dynamodb.putItem(params, (err, data) => {
-        if (err)
-            res.status(401).send(err.message);
-        else {
-            console.log(data);
-            res.send(201);
-        }
-    });
+	dynamodb.putItem(params, (err, data) => {
+		if (err) {
+			res.status(401).send();
+			console.log(err);
+		}
+		else
+			res.status(201).send();
+	});
 });
 
 app.put('/login/user', (req, res) => {
-    let params = {
-        ExpressionAttributeValues: {
-            ":v1": {
-                S: req.body.usuario
-            }
-        },
-        KeyConditionExpression: "id = :v1",
-        TableName: "ImageAnalyzer"
-    };
+	let params = {
+		ExpressionAttributeValues: {
+			":v1": {
+				S: req.body.usuario
+			}
+		},
+		KeyConditionExpression: "id = :v1",
+		TableName: "ImageAnalyzer"
+	};
 
-    dynamodb.query(params, function (err, data) {
-        if (err)
-            res.status(401).send(err); // an error occurred
-        else {
-            if (data.Items[0].password.S == req.body.password)
-                res.status(201).send();
-            else
-                res.status(400).send("Invalid username or password");
-        }
-    });
+	dynamodb.query(params, function (err, data) {
+		if (err)
+			res.status(401).send(err); // an error occurred
+		else {
+			if (data.Items.length > 0)
+				if (bcrypt.compare(req.body.password, data.Items[0].password.S))
+					res.status(201).send(req.body.usuario);
+				else
+					res.status(401).send();
+			else
+				res.status(400).send();
+		}
+	});
 })
 
 app.post('/s3/post', async (req, res) => {
@@ -147,7 +160,7 @@ async function allBucketKeys(s3, bucket) {
 	};
 
 	var keys = [];
-	for (;;) {
+	for (; ;) {
 		var data = await s3.listObjects(params).promise();
 
 		data.Contents.forEach(elem => {
