@@ -255,6 +255,76 @@ app.post('/rek/analysis', async (req, res) => {
 	})
 });
 
+app.post('/rek/celebrity', async (req, res) => {
+	const { inputKey, celebrityKey } = req.body;
+	let bucket = 'image-analyzer-4-cloud';
+	let inputImage = await detectFaces(bucket, inputKey);
+	let celebrityImage = await detectFaces(bucket, celebrityKey);
+
+	if (inputImage.length != 1 || celebrityImage.length != 1)
+		res.status(400).send({ error: 'Please, post images with just one face showing.' });
+
+	const celebrity = await getCelebrity(bucket, celebrityKey);
+
+	if (celebrity.length == 0)
+		res.status(401).send({ error: 'The person is not a celebrity.' });
+
+	const match = await compareFaces(
+		bucket,
+		inputKey,
+		celebrityKey
+	);
+
+	res.status(200).send({
+		celebrityName: celebrity[0].Name,
+		match: match[0].Similarity
+	});
+});
+
+
+const detectFaces = async (bucket, key) => {
+	const params = {
+		Image: {
+			S3Object: {
+				Bucket: bucket,
+				Name: key
+			}
+		},
+		Attributes: ['ALL']
+	};
+
+	try {
+		return (await rekognition.detectFaces(params).promise()).FaceDetails;
+	} catch (err) {
+		return err;
+	}
+};
+
+const compareFaces = async (bucket, input, target) => {
+	var params = {
+		SimilarityThreshold: 0,
+		SourceImage: {
+			S3Object: {
+				Bucket: bucket,
+				Name: input
+			}
+		},
+		TargetImage: {
+			S3Object: {
+				Bucket: bucket,
+				Name: target
+			}
+		}
+	};
+
+	try {
+		return (await rekognition.compareFaces(params).promise()).FaceMatches;
+	} catch (err) {
+		return err;
+	}
+};
+
+
 
 
 app.listen(port, () => console.log('Running in  http://localhost'));
