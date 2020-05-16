@@ -188,9 +188,9 @@ app.post('/s3/images', async (req, res) => {
 	});
 });
 
-app.get('/s3/keys', async (req, res) => {
-	res.json(await allBucketKeys(s3, 'image-analyzer-4-cloud'));
-});
+// app.get('/s3/keys', async (req, res) => {
+// 	res.json(await allBucketKeys(s3, 'image-analyzer-4-cloud'));
+// });
 
 app.get('/getMyImages', (req, res) => {
 	let params = {
@@ -217,7 +217,7 @@ app.get('/getMyImages', (req, res) => {
 							Key: req.headers.token + "-" + rdata.Items[0].images.SS[i],
 							Expires: 60
 						})
-						urls.push(url);
+						urls.push([req.headers.token + "-" + rdata.Items[0].images.SS[i], url]);
 					}
 					res.status(200).send({ "urls": urls });
 				}
@@ -235,49 +235,65 @@ app.get('/getMyImages', (req, res) => {
 
 app.post('/rek/analysis', async (req, res) => {
 	console.log(req.body.key);
-	let image = await detectFaces('image-analyzer-4-cloud', req.body.key);
-	res.json(image[0]);
-});
-
-const detectFaces = async (bucket, key) => {
-	const params = {
+	var params = {
 		Image: {
 			S3Object: {
-				Bucket: bucket,
-				Name: key
+				Bucket: "image-analyzer-4-cloud",
+				Name: req.body.key
 			}
-		},
-		Attributes: ['ALL']
-	};
-
-	try {
-		return (await rekognition.detectFaces(params).promise()).FaceDetails;
-	} catch (err) {
-		return err;
-	}
-};
-
-async function allBucketKeys(s3, bucket) {
-	const params = {
-		Bucket: bucket
-	};
-
-	var keys = [];
-	for (; ;) {
-		var data = await s3.listObjects(params).promise();
-
-		data.Contents.forEach(elem => {
-			keys = keys.concat(elem.Key);
-		});
-
-		if (!data.IsTruncated) {
-			break;
 		}
-		params.Marker = data.NextMarker;
-	}
+	};
+	rekognition.detectFaces(params, (err, data) => {
+		let length = data.FaceDetails.length;
+		console.log(length);
+		if(length > 1)
+			res.status(400).send();
+		else if(length < 1)
+			res.status(401).send();
+		else
+			res.status(200).send(data.FaceDetails);
+	})
+});
 
-	return keys;
-}
+// const detectFaces = async (bucket, key) => {
+// 	const params = {
+// 		Image: {
+// 			S3Object: {
+// 				Bucket: bucket,
+// 				Name: key
+// 			}
+// 		},
+// 		Attributes: ['ALL']
+// 	};
+
+// 	try {
+// 		return (await rekognition.detectFaces(params).promise()).FaceDetails;
+// 	} catch (err) {
+// 		return err;
+// 	}
+// };
+
+// async function allBucketKeys(s3, bucket) {
+// 	const params = {
+// 		Bucket: bucket
+// 	};
+
+// 	var keys = [];
+// 	for (; ;) {
+// 		var data = await s3.listObjects(params).promise();
+
+// 		data.Contents.forEach(elem => {
+// 			keys = keys.concat(elem.Key);
+// 		});
+
+// 		if (!data.IsTruncated) {
+// 			break;
+// 		}
+// 		params.Marker = data.NextMarker;
+// 	}
+
+// 	return keys;
+// }
 
 
 

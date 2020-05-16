@@ -30,10 +30,18 @@ document.body.appendChild(lightbox);
 	xhr.onload = () => {
 		if (xhr.status == 200) {
 			let img;
+			let count = 0;
 			for (let url of JSON.parse(xhr.response).urls) {
 				img = document.createElement("img");
-				img.src = url;
+				img.src = url[1];
+				img.id = count;
+				// img.classList.add("btn");
+				img.setAttribute('data-toggle', "modal");
+				img.setAttribute('data-target', "#modelId");
+				img.onclick = tryFeature;
 				S3ImagesGrid.appendChild(img);
+				imagesFromS3.push(url[0]);
+				count++;
 			}
 		}
 		else {
@@ -174,18 +182,23 @@ function clear() {
 	readyToUpload = false;
 }
 
-let showS3Images = function () {
-	if (imagesFromS3.length > 0) {
-		S3ImagesGridDiv.className = S3ImagesGridDiv.className.replace(
-			'inactive',
-			''
-		);
-		S3ImagesGrid.innerHTML = '';
-		for (const file of imagesFromS3) {
-			const image = document.createElement('img');
-			image.src = file.base64;
-			S3ImagesGrid.appendChild(image);
-		}
+function tryFeature(event) {
+	let index = event.target.id;
+	if (index < imagesFromS3.length) {
+		document.getElementById("modalTitle").innerText = imagesFromS3[index].replace(window.sessionStorage.getItem("token") + "-", "");
+		let xhr = new XMLHttpRequest();
+		xhr.open('POST', "/rek/analysis");
+		xhr.setRequestHeader('Content-Type', 'application/json');
+		xhr.onload = () => {
+			if (xhr.status == 200)
+				console.log(xhr.response);
+			else if (xhr.status == 401)
+				alert("Hey, there are no faces in the pic");
+			else
+				alert("Just a person per pic, please");
+		};
+		xhr.send(JSON.stringify({key : imagesFromS3[index]}));
+		return;
 		const allImages = document.querySelectorAll('img');
 		allImages.forEach(async (image, index) => {
 			image.addEventListener('click', async e => {
@@ -220,6 +233,8 @@ let showS3Images = function () {
 			lightbox.classList.remove('active');
 		});
 	}
+	else
+		console.log("Failed to load keys");
 };
 
 document.getElementById("logout").onclick = () => {
