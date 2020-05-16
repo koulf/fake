@@ -124,10 +124,9 @@ let uploadImagesToS3 = async function () {
 					key: imageToUpload.name
 				};
 				let res = await makeRequest('POST', '/s3/post', body)
-				console.log("res: " + res);
+				// console.log("res: " + res);
 			}
-
-			console.log("Ready to save metadata");
+			// console.log("Ready to save metadata");
 
 			xhr = new XMLHttpRequest();
 			xhr.open('POST', '/images/saved');
