@@ -275,22 +275,24 @@ app.post('/rek/celebrity', async (req, res) => {
 
 	if (inputImage.length != 1 || celebrityImage.length != 1)
 		res.status(400).send({ error: 'Please, post images with just one face showing.' });
+	else {
+		const celebrity = await getCelebrity(bucket, celebrityKey);
 
-	const celebrity = await getCelebrity(bucket, celebrityKey);
-
-	if (celebrity.length == 0)
-		res.status(401).send({ error: 'The person is not a celebrity.' });
-
-	const match = await compareFaces(
-		bucket,
-		inputKey,
-		celebrityKey
-	);
-
-	res.status(200).send({
-		celebrityName: celebrity[0].Name,
-		match: match[0].Similarity
-	});
+		if (celebrity.length == 0)
+			res.status(401).send({ error: 'The person is not a celebrity.' });
+		else {
+			const match = await compareFaces(
+				bucket,
+				inputKey,
+				celebrityKey
+			);
+		
+			res.status(200).send({
+				celebrityName: celebrity[0].Name,
+				match: match[0].Similarity
+			});
+		}
+	}
 });
 
 
