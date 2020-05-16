@@ -255,46 +255,6 @@ app.post('/rek/analysis', async (req, res) => {
 	})
 });
 
-// const detectFaces = async (bucket, key) => {
-// 	const params = {
-// 		Image: {
-// 			S3Object: {
-// 				Bucket: bucket,
-// 				Name: key
-// 			}
-// 		},
-// 		Attributes: ['ALL']
-// 	};
-
-// 	try {
-// 		return (await rekognition.detectFaces(params).promise()).FaceDetails;
-// 	} catch (err) {
-// 		return err;
-// 	}
-// };
-
-// async function allBucketKeys(s3, bucket) {
-// 	const params = {
-// 		Bucket: bucket
-// 	};
-
-// 	var keys = [];
-// 	for (; ;) {
-// 		var data = await s3.listObjects(params).promise();
-
-// 		data.Contents.forEach(elem => {
-// 			keys = keys.concat(elem.Key);
-// 		});
-
-// 		if (!data.IsTruncated) {
-// 			break;
-// 		}
-// 		params.Marker = data.NextMarker;
-// 	}
-
-// 	return keys;
-// }
-
 
 
 app.listen(port, () => console.log('Running in  http://localhost'));
