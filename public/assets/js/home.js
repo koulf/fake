@@ -18,6 +18,7 @@ let imagesToUpload = [];
 let imagesFromS3 = [];
 
 let readyToUpload = false;
+let index;
 
 const lightbox = document.createElement('div');
 lightbox.id = 'lightbox';
@@ -35,10 +36,13 @@ document.body.appendChild(lightbox);
 				img = document.createElement("img");
 				img.src = url[1];
 				img.id = count;
-				// img.classList.add("btn");
 				img.setAttribute('data-toggle', "modal");
 				img.setAttribute('data-target', "#modelId");
-				img.onclick = tryFeature;
+				img.onclick = (event) => {
+					index = event.target.id;
+					document.getElementById("modalTitle").innerText = imagesFromS3[index].replace(window.sessionStorage.getItem("token") + "-", "");
+
+				};
 				S3ImagesGrid.appendChild(img);
 				imagesFromS3.push(url[0]);
 				count++;
@@ -71,13 +75,6 @@ function upload(files) {
 
 	toUploadGridDiv.removeAttribute("hidden");
 	dropzone.setAttribute("hidden", "");
-
-	// toUploadGridDiv.className = toUploadGridDiv.className.replace(
-	// 	'inactive',
-	// 	''
-	// );
-	// dropzone.className += ' inactive';
-	// uploadBtn.className = uploadBtn.className.replace('inactive', '');
 }
 
 dropzone.ondrop = function (e) {
@@ -170,6 +167,7 @@ let uploadImagesToS3 = async function () {
 
 function cancel() {
 	toUploadGrid.textContent = '';
+	toUploadGridDiv.setAttribute("hidden", "");
 	imagesToUpload = [];
 	clear();
 }
@@ -182,56 +180,33 @@ function clear() {
 	readyToUpload = false;
 }
 
-function tryFeature(event) {
-	let index = event.target.id;
+function clearData() {
+	document.getElementsByClassName("modal-body")[0].innerHTML = "";
+}
+
+function faceAnalysis() {
 	if (index < imagesFromS3.length) {
-		document.getElementById("modalTitle").innerText = imagesFromS3[index].replace(window.sessionStorage.getItem("token") + "-", "");
 		let xhr = new XMLHttpRequest();
 		xhr.open('POST', "/rek/analysis");
 		xhr.setRequestHeader('Content-Type', 'application/json');
 		xhr.onload = () => {
-			if (xhr.status == 200)
-				console.log(xhr.response);
+			if (xhr.status == 200) {
+				let modalBody = document.getElementsByClassName("modal-body")[0];
+				modalBody.innerHTML = "";
+				let result = JSON.parse(xhr.response);
+				for (let key of Object.keys(result)){
+					let newRow = document.createElement("div");
+					newRow.classList.add("container-fluid");
+					newRow.innerText = key + ": " + result[key];
+					modalBody.appendChild(newRow);
+				}
+			}
 			else if (xhr.status == 401)
 				alert("Hey, there are no faces in the pic");
 			else
 				alert("Just a person per pic, please");
 		};
-		xhr.send(JSON.stringify({key : imagesFromS3[index]}));
-		return;
-		const allImages = document.querySelectorAll('img');
-		allImages.forEach(async (image, index) => {
-			image.addEventListener('click', async e => {
-				lightbox.classList.add('active');
-				const img = document.createElement('img');
-				const par0 = document.createElement('h3');
-
-				img.src = image.src;
-				while (lightbox.firstChild) {
-					lightbox.removeChild(lightbox.firstChild);
-				}
-				const info = await (
-					await fetch('/rek/analysis', {
-						method: 'POST', // or 'PUT'
-						body: JSON.stringify({ key: imagesFromS3[index - 1].name }), // data can be `string` or {object}!
-						headers: {
-							'Content-Type': 'application/json'
-						}
-					})
-				).json();
-
-				par0.innerHTML = `${info.Gender.Value} ${info.AgeRange.Low}-${info.AgeRange.High} years old.`;
-				par0.classList.add('text-light');
-				lightbox.appendChild(img);
-				lightbox.appendChild(par0);
-
-			});
-		});
-
-		lightbox.addEventListener('click', e => {
-			if (e.target !== e.currentTarget) return;
-			lightbox.classList.remove('active');
-		});
+		xhr.send(JSON.stringify({ key: imagesFromS3[index] }));
 	}
 	else
 		console.log("Failed to load keys");
