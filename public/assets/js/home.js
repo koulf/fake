@@ -29,9 +29,12 @@ document.body.appendChild(lightbox);
 	xhr.setRequestHeader("token", window.sessionStorage.getItem("token"));
 	xhr.onload = () => {
 		if (xhr.status == 200) {
-			let img = document.createElement("img");
-			img.src = xhr.response;
-			S3ImagesGrid.appendChild(img);
+			let img;
+			for (let url of JSON.parse(xhr.response).urls) {
+				img = document.createElement("img");
+				img.src = url;
+				S3ImagesGrid.appendChild(img);
+			}
 		}
 		else {
 			message.removeAttribute("hidden");
@@ -44,8 +47,8 @@ document.body.appendChild(lightbox);
 
 
 function upload(files) {
-	let reader = new FileReader();
 	for (const file of files) {
+		let reader = new FileReader();
 		if (!file.type.includes('image'))
 			continue;
 		reader.onload = function (e) {
@@ -85,40 +88,44 @@ dropzone.ondragleave = function () {
 	return false;
 };
 
-
+function makeRequest(method, url, body) {
+	return new Promise(function (resolve, reject) {
+		var xhr = new XMLHttpRequest();
+		xhr.open(method, url);
+		xhr.setRequestHeader('Content-Type', 'application/json');
+		xhr.setRequestHeader("token", window.sessionStorage.getItem('token'));
+		xhr.onload = function () {
+			if (this.status == 200) {
+				resolve(xhr.response);
+			} else {
+				reject({
+					status: this.status,
+					statusText: xhr.statusText
+				});
+			}
+		};
+		xhr.onerror = function () {
+			reject({
+				status: this.status,
+				statusText: xhr.statusText
+			});
+		};
+		xhr.send(JSON.stringify(body));
+	});
+}
 
 let uploadImagesToS3 = async function () {
-	// toUploadGridDiv.className += 'inactive';
-	// toUploadGrid.innerHTML = '';
-	// dropzone.className = dropzone.className.replace('inactive', '');
-	// uploadBtn.className += ' inactive';
-	// console.log(imagesToUpload);
 
 	if (readyToUpload) {
 		if (imagesToUpload.length > 0) {
-			let xhr = new XMLHttpRequest();
-			xhr.open('POST', '/s3/post');
-			xhr.setRequestHeader('Content-Type', 'application/json');
-			xhr.setRequestHeader("token", window.sessionStorage.getItem('token'));
-			let progress = imagesToUpload.length;
-			xhr.onload = () => {
-				console.log(xhr.status);
-				if (xhr.status == 200) {
-					console.log(progress);
-					progress -= 1;
-				}
-			}
 			for (const imageToUpload of imagesToUpload) {
-				console.log("go");
 				const body = {
 					base64: imageToUpload.base64,
 					key: imageToUpload.name
 				};
-				xhr.send(JSON.stringify(body));
+				let res = await makeRequest('POST', '/s3/post', body)
+				console.log("res: " + res);
 			}
-
-			while (progress != 0)
-				setTimeout(1000);
 
 			console.log("Ready to save metadata");
 
@@ -136,13 +143,10 @@ let uploadImagesToS3 = async function () {
 					alert(xhr.responseText);
 				else
 					alert("Unknown error");
+				window.location.reload();
 			}
 			xhr.send();
-
-
 			cancel();
-			window.location.reload();
-
 			// imagesFromS3.push(imagesToUpload);
 			// imagesFromS3 = imagesFromS3.flat(Infinity);
 			// showS3Images();

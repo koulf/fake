@@ -113,8 +113,8 @@ app.post('/s3/post', (req, res) => {
 	};
 
 	s3.putObject(params, function (err, data) {
-		if (err) 
-			console.log(err);
+		if (err)
+			res.status(401).send(err);
 		else {
 			console.log('Successfully uploaded photo to bucket');
 			res.status(200).send();
@@ -142,9 +142,9 @@ app.post('/images/saved', (req, res) => {
 				else {
 					if (rdata.Items.length > 0) {
 						for (let img of images)
-							rdata.Items[0].images.push(img);
+							rdata.Items[0].images.SS.push(img);
 						params = {
-							Item: rdataItems[0],
+							Item: rdata.Items[0],
 							ReturnConsumedCapacity: "TOTAL",
 							TableName: "ImageAnalyzer"
 						};
@@ -193,21 +193,40 @@ app.get('/s3/keys', async (req, res) => {
 });
 
 app.get('/getMyImages', (req, res) => {
+	let params = {
+		ExpressionAttributeValues: {
+			":v1": {
+				S: req.headers.token
+			}
+		},
+		KeyConditionExpression: "id = :v1",
+		TableName: "ImageAnalyzer"
+	};
 
-	const url = s3.getSignedUrl('getObject', {
-		Bucket: "image-analyzer-4-cloud",
-		Key: req.headers.token + "-" + req,
-		Expires: 60
-	})
-
-	https.get(url, (res) => {
-		console.log(res.body);
-	})
-
-	// fetch(url).then((data) => console.log(data.json()));
-
-	console.log(url)
-	res.status(200).send(url);
+	dynamodb.query(params, function (err, rdata) {
+		if (err)
+			res.status(402).send();
+		else
+			if (rdata.Items.length > 0) {
+				if (rdata.Items[0].images.SS.length > 1) {
+					let urls = [];
+					let url = "";
+					for (let i = 1; i < rdata.Items[0].images.SS.length; i++) {
+						url = s3.getSignedUrl('getObject', {
+							Bucket: "image-analyzer-4-cloud",
+							Key: req.headers.token + "-" + rdata.Items[0].images.SS[i],
+							Expires: 60
+						})
+						urls.push(url);
+					}
+					res.status(200).send({ "urls": urls });
+				}
+				else
+					res.status(400).send();
+			}
+			else
+				res.status(400).send();
+	});
 })
 
 
