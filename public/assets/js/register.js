@@ -1,5 +1,8 @@
 'use strict';
 
+if (window.sessionStorage.getItem("token") != null)
+    window.location.href = "/home";
+
 
 let registerBtn = document.getElementById("register_btn");
 
@@ -7,6 +10,7 @@ let username = document.getElementById("inputUserame");
 let mail = document.getElementById("inputEmail");
 let pass = document.getElementById("inputPassword");
 let passC = document.getElementById("inputConfirmPassword");
+
 
 
 registerBtn.addEventListener("click", (evt) => {

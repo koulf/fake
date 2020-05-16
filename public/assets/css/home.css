@@ -63,9 +63,3 @@ body {
     background-color: black;
     border: 2px solid white;
   }
-
-  /* .body {
-    background-image: url('/assets/img/bg_a.jpg'), url('assets/img/bg_b.jpg');
-    background-position: right, left;
-    background-repeat: no-repeat, no-repeat;
-} */

@@ -37,24 +37,37 @@
                 <h1 class="font-weight-light">Image Analyzer</h1>
                 <div class="uploads mb-3"></div>
                 <hr>
-                <button class="btn btn-primary btn-block mb-3 inactive" id="uploadBtn"
-                    onclick="uploadImagesToS3()">Upload
-                    images!</button>
 
-                <div class="inactive" id="toUploadGridDiv">
-                    <h3 class="text-center font-weight-light">Your images to upload...</h3>
-                    <div class="grid mb-3" id="toUploadGrid"></div>
-                </div>
+                <h3 class="text-center font-weight-light" id="message" hidden>You have no images!</h1>
 
-                <div class="dropzone mt-3" id="dropzone">
-                    <p class="lead">Drop your images here!</p>
-                </div>
-
-                <div class="mt-3 inactive" id="S3ImagesGridDiv">
+                <div class="mt-3" id="S3ImagesGridDiv">
                     <hr>
                     <h3 class="text-center font-weight-light">Your images!</h3>
-                    <div class="grid mb-3" id="S3ImagesGrid"></div>
+                    <div class="grid mb-3" id="S3ImagesGrid">
+
+                    </div>
                 </div>
+
+                <div class="foot" style="margin-top: 5em;">
+                    <hr>
+
+                    <button class="col-4 btn btn-primary mb-4" id="uploadBtn" onclick="uploadImagesToS3()">Upload
+                        images</button>
+
+                    <button class="col-4 btn btn-danger mb-4" onclick="cancel()">Cancel</button>
+
+                    <div hidden class="dropzone mt-3" id="dropzone">
+                        <p class="lead">Drop your images here!</p>
+                    </div>
+
+                    <div hidden id="toUploadGridDiv">
+                        <h3 class="text-center font-weight-light">Your images to upload...</h3>
+                        <div class="grid mb-3" id="toUploadGrid">
+
+                        </div>
+                    </div>
+                </div>
+
 
             </div>
         </div>
