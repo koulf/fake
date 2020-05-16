@@ -336,6 +336,25 @@ const compareFaces = async (bucket, input, target) => {
 	}
 };
 
+const getCelebrity = async (bucket, celebrityKey) => {
+	var params = {
+		Image: {
+			/* required */
+			S3Object: {
+				Bucket: bucket,
+				Name: celebrityKey
+			}
+		}
+	};
+
+	try {
+		return (await rekognition.recognizeCelebrities(params).promise())
+			.CelebrityFaces;
+	} catch (err) {
+		return err;
+	}
+};
+
 
 
 
