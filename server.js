@@ -177,7 +177,8 @@ app.post('/s3/images', async (req, res) => {
 		Key: req.key
 	};
 	s3.getObject(params, function (err, data) {
-		if (err) console.log(err, err.stack);
+		if (err)
+			console.log(err);
 		else {
 			res.json({
 				name: req.key,
@@ -234,24 +235,35 @@ app.get('/getMyImages', (req, res) => {
 // Rekognition -----------------------------------------------------------------------
 
 app.post('/rek/analysis', async (req, res) => {
-	console.log(req.body.key);
 	var params = {
 		Image: {
 			S3Object: {
 				Bucket: "image-analyzer-4-cloud",
 				Name: req.body.key
 			}
-		}
+		},
+		Attributes: ['ALL']
 	};
 	rekognition.detectFaces(params, (err, data) => {
 		let length = data.FaceDetails.length;
-		console.log(length);
 		if(length > 1)
 			res.status(400).send();
 		else if(length < 1)
 			res.status(401).send();
-		else
-			res.status(200).send(data.FaceDetails);
+		else {
+			let face = data.FaceDetails[0];
+			let maxEmo = 0;
+			res.status(200).send({
+				"Age": face.AgeRange.Low + " to " + face.AgeRange.High,
+				"Gender": face.Gender.Value,
+				"Emotion": face.Emotions.filter((elem) =>{
+					if (elem.Confidence > maxEmo){
+						maxEmo = elem.Confidence;
+						return elem;
+					}
+				})[0].Type.toLowerCase()
+			});
+		}
 	})
 });
 
