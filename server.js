@@ -101,11 +101,6 @@ app.post('/s3/post', (req, res) => {
 		'base64'
 	);
 
-	if (dataImg.hasOwnProperty(req.headers.token))
-		dataImg[req.headers.token].push(req.body.key);
-	else
-		dataImg[req.headers.token] = [req.body.key];
-
 	const params = {
 		Body: base64data,
 		Bucket: 'image-analyzer-4-cloud',
@@ -123,52 +118,48 @@ app.post('/s3/post', (req, res) => {
 });
 
 app.post('/images/saved', (req, res) => {
-	if (dataImg.hasOwnProperty(req.headers.token)) {
-		let images = dataImg[req.headers.token];
-		if (images.length > 0) {
-			let params = {
-				ExpressionAttributeValues: {
-					":v1": {
-						S: req.headers.token
-					}
-				},
-				KeyConditionExpression: "id = :v1",
-				TableName: "ImageAnalyzer"
-			};
-
-			dynamodb.query(params, function (err, rdata) {
-				if (err)
-					res.status(402).send(err);
-				else {
-					if (rdata.Items.length > 0) {
-						for (let img of images)
-							rdata.Items[0].images.SS.push(img);
-						params = {
-							Item: rdata.Items[0],
-							ReturnConsumedCapacity: "TOTAL",
-							TableName: "ImageAnalyzer"
-						};
-
-						dynamodb.putItem(params, (err, data) => {
-							if (err) {
-								res.status(401).send();
-								console.log(err);
-							}
-							else
-								res.status(200).send();
-						});
-					}
-					else
-						res.status(400).send();
+	let images = req.body;
+	if (images.length > 0) {
+		let params = {
+			ExpressionAttributeValues: {
+				":v1": {
+					S: req.headers.token
 				}
-			});
-		}
-		else
-			res.status(201).send();
-		delete dataImg[req.headers.token];
+			},
+			KeyConditionExpression: "id = :v1",
+			TableName: "ImageAnalyzer"
+		};
+
+		dynamodb.query(params, function (err, rdata) {
+			if (err)
+				res.status(402).send(err);
+			else {
+				if (rdata.Items.length > 0) {
+					for (let img of images)
+						rdata.Items[0].images.SS.push(img);
+					params = {
+						Item: rdata.Items[0],
+						ReturnConsumedCapacity: "TOTAL",
+						TableName: "ImageAnalyzer"
+					};
+
+					dynamodb.putItem(params, (err, data) => {
+						if (err) {
+							res.status(401).send();
+							console.log(err);
+						}
+						else
+							res.status(200).send();
+					});
+				}
+				else
+					res.status(400).send();
+			}
+		});
 	}
 	else
 		res.status(201).send();
+	delete dataImg[req.headers.token];
 })
 
 app.post('/s3/images', async (req, res) => {

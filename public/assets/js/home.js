@@ -139,14 +139,15 @@ let uploadImagesToS3 = async function () {
 			}
 			// console.log("Ready to save metadata");
 
+			let imageKeys = imagesToUpload.map((e) => e.name);
+
 			xhr = new XMLHttpRequest();
 			xhr.open('POST', '/images/saved');
+			xhr.setRequestHeader('Content-Type', 'application/json');
 			xhr.setRequestHeader("token", window.sessionStorage.getItem('token'));
 			xhr.onload = () => {
 				if (xhr.status == 200)
 					alert("Upload complete");
-				else if (xhr.status == 201)
-					alert("Nothing to upload");
 				else if (xhr.status == 400)
 					alert("No items found");
 				else if (xhr.status == 402)
@@ -155,7 +156,7 @@ let uploadImagesToS3 = async function () {
 					alert("Unknown error");
 				window.location.reload();
 			}
-			xhr.send();
+			xhr.send(JSON.stringify(imageKeys));
 			cancel();
 			// imagesFromS3.push(imagesToUpload);
 			// imagesFromS3 = imagesFromS3.flat(Infinity);
