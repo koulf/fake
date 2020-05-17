@@ -13,6 +13,8 @@ let S3ImagesGrid = document.getElementById('S3ImagesGrid');
 let uploadBtn = document.getElementById('uploadBtn');
 let message = document.getElementById("message");
 
+let modalBody = document.getElementsByClassName("modal-body")[0];
+
 
 let imagesToUpload = [];
 let imagesFromS3 = [];
@@ -83,12 +85,16 @@ dropzone.ondrop = function (e) {
 	upload(e.dataTransfer.files);
 };
 
-dropzone.ondragover = function () {
+dropzone.ondragover = setDrOv;
+
+function setDrOv() {
 	this.className = 'dropzone dragover';
 	return false;
 };
 
-dropzone.ondragleave = function () {
+dropzone.ondragleave = delDrOv;
+
+function delDrOv() {
 	this.className = 'dropzone';
 	return false;
 };
@@ -184,6 +190,10 @@ function clearData() {
 	document.getElementsByClassName("modal-body")[0].innerHTML = "";
 }
 
+
+
+// FEATURES
+
 function faceAnalysis() {
 	if (index < imagesFromS3.length) {
 		let xhr = new XMLHttpRequest();
@@ -191,10 +201,9 @@ function faceAnalysis() {
 		xhr.setRequestHeader('Content-Type', 'application/json');
 		xhr.onload = () => {
 			if (xhr.status == 200) {
-				let modalBody = document.getElementsByClassName("modal-body")[0];
 				modalBody.innerHTML = "";
 				let result = JSON.parse(xhr.response);
-				for (let key of Object.keys(result)){
+				for (let key of Object.keys(result)) {
 					let newRow = document.createElement("div");
 					newRow.classList.add("container-fluid");
 					newRow.innerText = key + ": " + result[key];
@@ -211,6 +220,70 @@ function faceAnalysis() {
 	else
 		console.log("Failed to load keys");
 };
+
+function startFC() {
+	let newDP = "  <div class='dropzone mt-3' id='dropzoneTemp'> " +
+		"<p class='lead'>Drop famous person image</p>" +
+		"</div>";
+	modalBody.innerHTML = newDP;
+	newDP = document.getElementById("dropzoneTemp");
+	newDP.ondragover = setDrOv;
+	newDP.ondragleave = delDrOv;
+	newDP.ondrop = tempFamousUpload;
+}
+
+function tempFamousUpload(ev) {
+	ev.preventDefault();
+	modalBody.innerText = "Loading ...";
+
+	if (ev.dataTransfer.files.length > 1)
+		alert("Just first image file will be used")
+
+	let file = ev.dataTransfer.files[0];
+
+	if (!file.type.includes('image'))
+		alert("Is not an image");
+	else {
+		let xhr = new XMLHttpRequest();
+		let reader = new FileReader();
+		reader.onload = function (e) {
+			xhr.open("POST", "/upload/famous");
+			xhr.setRequestHeader('Content-Type', 'application/json');
+			xhr.onload = () => {
+				if (xhr.status == 200) {
+					let xhr2 = new XMLHttpRequest();
+					xhr2.open('POST', '/rek/celebrity');
+					xhr2.onload = () => {
+						if (xhr2.status == 200) {
+							let data = JSON.parse(xhr2.response);
+							modalBody.innerHTML = "";
+							for (let key of Object.keys(data)) {
+								let newRow = document.createElement("div");
+								newRow.classList.add("container-fluid");
+								newRow.innerText = key + ": " + data[key];
+								modalBody.appendChild(newRow);
+							}
+						}
+						else if (xhr2.status >= 400) {
+							alert(xhr2.response);
+							modalBody.innerHTML = "";
+						}
+						else
+							alert("Unkonw error");
+
+					};
+					let obj = { inputKey: imagesFromS3[index], celebrityKey: xhr.response };
+					xhr2.send(JSON.stringify(obj));
+				}
+				else
+					alert("Coudn't upload the famous person image");
+			};
+			xhr.send(JSON.stringify({ name: file.name, base64: e.target.result }));
+		};
+		reader.readAsDataURL(file);
+	}
+}
+
 
 document.getElementById("logout").onclick = () => {
 	window.sessionStorage.removeItem("token");

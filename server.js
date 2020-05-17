@@ -3,7 +3,7 @@ const app = express();
 const bcrypt = require('bcryptjs');
 const AWS = require("aws-sdk");
 const bodyParser = require('body-parser');
-const https = require('https');
+const randomId = require('random-id');
 
 AWS.config.update({ region: 'us-east-1' });
 const dynamodb = new AWS.DynamoDB();
@@ -44,7 +44,7 @@ app.put('/user/register', (req, res) => {
 	})
 
 	item.images = {
-		SS: ["", "kk"]
+		SS: [""]
 	}
 
 	let params = {
@@ -230,6 +230,29 @@ app.get('/getMyImages', (req, res) => {
 	});
 })
 
+app.post('/upload/famous', (req, res) => {
+
+	const base64data = new Buffer(
+		req.body.base64.replace(/^data:image\/\w+;base64,/, ''),
+		'base64'
+	);
+
+	let keyG = randomId(10) + "-" + req.body.name;
+
+	const params = {
+		Body: base64data,
+		Bucket: 'image-analyzer-4-cloud',
+		Key: keyG
+	};
+
+	s3.putObject(params, function (err, data) {
+		if (err)
+			res.status(401).send(err);
+		else
+			res.status(200).send(keyG);
+	});
+});
+
 
 
 // Rekognition -----------------------------------------------------------------------
@@ -246,9 +269,9 @@ app.post('/rek/analysis', async (req, res) => {
 	};
 	rekognition.detectFaces(params, (err, data) => {
 		let length = data.FaceDetails.length;
-		if(length > 1)
+		if (length > 1)
 			res.status(400).send();
-		else if(length < 1)
+		else if (length < 1)
 			res.status(401).send();
 		else {
 			let face = data.FaceDetails[0];
@@ -256,8 +279,8 @@ app.post('/rek/analysis', async (req, res) => {
 			res.status(200).send({
 				"Age": face.AgeRange.Low + " to " + face.AgeRange.High,
 				"Gender": face.Gender.Value,
-				"Emotion": face.Emotions.filter((elem) =>{
-					if (elem.Confidence > maxEmo){
+				"Emotion": face.Emotions.filter((elem) => {
+					if (elem.Confidence > maxEmo) {
 						maxEmo = elem.Confidence;
 						return elem;
 					}
@@ -268,31 +291,44 @@ app.post('/rek/analysis', async (req, res) => {
 });
 
 app.post('/rek/celebrity', async (req, res) => {
-	const { inputKey, celebrityKey } = req.body;
+	const inputKey = JSON.parse(req.body).inputKey;
+	const celebrityKey = JSON.parse(req.body).celebrityKey;
 	let bucket = 'image-analyzer-4-cloud';
 	let inputImage = await detectFaces(bucket, inputKey);
 	let celebrityImage = await detectFaces(bucket, celebrityKey);
 
 	if (inputImage.length != 1 || celebrityImage.length != 1)
-		res.status(400).send({ error: 'Please, post images with just one face showing.' });
+		res.status(400).send('Please, post images with just one face showing.');
 	else {
 		const celebrity = await getCelebrity(bucket, celebrityKey);
 
 		if (celebrity.length == 0)
-			res.status(401).send({ error: 'The person is not a celebrity.' });
+			res.status(401).send('The person is not a celebrity.');
 		else {
 			const match = await compareFaces(
 				bucket,
 				inputKey,
 				celebrityKey
 			);
-		
+
 			res.status(200).send({
-				celebrityName: celebrity[0].Name,
-				match: match[0].Similarity
+				"Celebrity name": celebrity[0].Name,
+				"Match": Number(match[0].Similarity).toFixed(2) + "%"
 			});
 		}
 	}
+
+	let params = {
+		Bucket: bucket,
+		Key: celebrityKey
+	}
+
+	s3.deleteObject(params, function (err, data) {
+		if (err)
+			console.log(err, err.stack);
+		else
+			console.log("Famous deleted");
+	});
 });
 
 
